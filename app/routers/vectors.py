@@ -3,6 +3,6 @@ from fastapi import APIRouter
 router = APIRouter(tags=["vectors"])
 
 
-@router.get("/vectors", tags=["vectors"])
-async def get():
-    return {"token_type": "bearer"}
+@router.get("/vectors/{x}/{y}/{z}", tags=["vectors"])
+async def get(x, y, z):
+    return {x, y, z}
