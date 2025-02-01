@@ -1,17 +1,54 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from ..core.db.database import async_get_db
 import mercantile
-from sqlalchemy import text
+from sqlalchemy import select, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from ..models.title_boundary import TitleBoundary
+from ..models.title_boundary_response import TitleBoundaryResponse
 
 router = APIRouter(tags=["vectors"])
 
 
-@router.get("/vectors/{x}/{y}/{z}", tags=["vectors"])
-async def get(x, y, z, db: AsyncSession = Depends(async_get_db)):
-    print(x, y, z)
-    bbox = mercantile.bounds(486, 332, 10)  # TODO: use x, y, z
-    response = await db.execute(text("SELECT * FROM title_boundary LIMIT 5"))
-    boundaries = response.fetchall()
-    print(boundaries)
-    return {"bbox": bbox}
+@router.get(
+    "/vectors/{z}/{x}/{y}", tags=["vectors"], response_model=list[TitleBoundaryResponse]
+)
+async def get(z, x, y, db: AsyncSession = Depends(async_get_db)):
+    try:
+        bbox = mercantile.bounds(int(x), int(y), int(z))
+        query = select(TitleBoundary).filter(
+            TitleBoundary.geometry.st_intersects(
+                func.ST_MakeEnvelope(bbox[0], bbox[1], bbox[2], bbox[3], 4326)
+            )
+        )
+        result = await db.execute(query)
+        title_boundaries = result.scalars().all()
+
+        if not title_boundaries:
+            raise HTTPException(status_code=404, detail="No title boundaries found")
+
+        return title_boundaries
+    except SQLAlchemyError as e:
+        # Handle any SQLAlchemy related error
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+
+    except Exception as e:
+        # Catch all other exceptions
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        )
+    # Create the query
+
+    # .filter(
+    #     TitleBoundary.geometry.st_intersects(
+    #         func.ST_MakeEnvelope(bbox[0], bbox[1], bbox[2], bbox[3], 4326)
+    #     )
+
+    # )
+
+    # image_path = "app/routers/img.png"  # Replace with the path to your PNG file
+    # if os.path.exists(image_path):
+    #     return FileResponse(image_path, media_type="image/png")
+    # else:
+    #     return {"error": "Image not found"}
+    # return {"bbox": bbox}
