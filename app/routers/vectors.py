@@ -1,19 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException
-from ..core.db.database import async_get_db
+from typing import Never
+
 import mercantile
-from sqlalchemy import select, func
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from ..models.title_boundary import TitleBoundary
-from ..models.title_boundary_response import TitleBoundaryResponse
+
+from app.core.db.database import async_get_db
+from app.models.title_boundary import TitleBoundary
+from app.models.title_boundary_response import TitleBoundaryResponse
 
 router = APIRouter(tags=["vectors"])
 
 
 @router.get(
-    "/vectors/{z}/{x}/{y}", tags=["vectors"], response_model=list[TitleBoundaryResponse]
+    "/vectors/{z}/{x}/{y}",
+    tags=["vectors"],
+    response_model=list[TitleBoundaryResponse],
 )
-async def get(z, x, y, db: AsyncSession = Depends(async_get_db)):
+async def get(z: str, x: str, y: str, db: AsyncSession = Depends(async_get_db)):
+    """Retrieve title boundaries for a given tile coordinate.
+
+    Args:
+        z (str): Zoom level of the tile.
+        x (str): X coordinate of the tile.
+        y (str): Y coordinate of the tile.
+        db (AsyncSession, optional): Database session dependency. Defaults to Depends(async_get_db).
+
+    Returns:
+        List[TitleBoundary]: List of title boundaries that intersect with the specified tile.
+
+    Raises:
+        HTTPException: If no title boundaries are found (404) or if a database query fails (500).
+
+    """
+
+    def raise_http_exception(status_code: int, detail: str) -> Never:
+        raise HTTPException(status_code=status_code, detail=detail)
+
     try:
         bbox = mercantile.bounds(int(x), int(y), int(z))
         query = select(TitleBoundary).filter(
@@ -25,17 +49,17 @@ async def get(z, x, y, db: AsyncSession = Depends(async_get_db)):
         title_boundaries = result.scalars().all()
 
         if not title_boundaries:
-            raise HTTPException(status_code=404, detail="No title boundaries found")
-
-        return title_boundaries
+            raise_http_exception(status_code=404, detail="No title boundaries found")
+        else:
+            return title_boundaries
     except SQLAlchemyError as e:
         # Handle any SQLAlchemy related error
-        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+        raise_http_exception(status_code=500, detail=f"Database query failed: {e!s}")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         # Catch all other exceptions
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred: {str(e)}"
+        raise_http_exception(
+            status_code=500, detail=f"An unexpected error occurred: {e!s}"
         )
     # Create the query
 

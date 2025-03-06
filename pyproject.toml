@@ -1,0 +1,27 @@
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D100", "ANN201", "B008", "FAST002", "COM812", "T201", "D103"]
+
+
+[tool.ruff]
+line-length = 120
+
+[project]
+name = "fastapi-vector-tiles"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.115.11",
+    "geoalchemy2>=0.17.1",
+    "mercantile>=1.2.1",
+    "pydantic>=2.10.6",
+    "sqlalchemy>=2.0.38",
+    "starlette>=0.46.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.9",
+]

@@ -1,19 +1,15 @@
-
-
-from sqlalchemy import String
-
-
-from ..core.db.database import Base
-
-
+from geoalchemy2 import Geometry
 from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declarative_base
-from geoalchemy2 import Geometry
+
+from app.core.db.database import Base
 
 Base = declarative_base()
 
 
 class TitleBoundary(Base):
+    """TitleBoundary model represents the boundary information of a title."""
+
     __tablename__ = "title_boundary"
 
     id = Column(String(255), primary_key=True)
@@ -38,5 +34,7 @@ class TitleBoundary(Base):
     reference = Column(String(255), nullable=True)
     start_date = Column(String(255), nullable=True)
     typology = Column(String(255), nullable=True)
-    def as_dict(self):
+
+    def as_dict(self) -> dict:
+        """Convert the TitleBoundary instance to a dictionary."""
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
