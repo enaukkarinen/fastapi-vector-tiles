@@ -8,3 +8,14 @@ uv run fastapi dev app/main.py
 uv run ruff check
 
 http://127.0.0.1:8000/vectors/1/2/3
+
+
+
+
+For those using a venv created with uv venv:
+
+    Open the Command Palette (shift + apple + p)
+    select "Python: Select Interpreter"
+    select the python version at .venv/bin/python
+
+This works with the VSCode debugger
