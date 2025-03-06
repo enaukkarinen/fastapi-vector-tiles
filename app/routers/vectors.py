@@ -14,7 +14,7 @@ router = APIRouter(tags=["vectors"])
 
 
 @router.get(
-    "/vectors/{z}/{x}/{y}",
+    "/vectors/{z}/{x}/{y}.png",
     tags=["vectors"],
     response_model=list[TitleBoundaryResponse],
 )
@@ -59,7 +59,7 @@ async def get(z: str, x: str, y: str, db: AsyncSession = Depends(async_get_db)):
     except Exception as e:  # noqa: BLE001
         # Catch all other exceptions
         raise_http_exception(
-            status_code=500, detail=f"An unexpected error occurred: {e!s}"
+            status_code=e.status_code, detail=f"An unexpected error occurred: {e!s}"
         )
     # Create the query
 

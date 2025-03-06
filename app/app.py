@@ -11,6 +11,7 @@ def create_app() -> FastAPI:
 
     # For local development
     origins = [
+        "http://localhost",
         "http://localhost:3000",
     ]
 
