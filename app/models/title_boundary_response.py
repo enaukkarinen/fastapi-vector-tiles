@@ -26,7 +26,7 @@ class TitleBoundaryResponse(BaseModel):
         orm_mode = True  # Tells Pydantic to read data from SQLAlchemy models
 
     @field_validator("geometry", mode="before")
-    def convert_geometry_to_wkt(self, v: WKBElement | None) -> str | None:
+    def convert_geometry_to_wkt(cls, v: WKBElement | None) -> str | None:
         """Convert a WKBElement to a WKT string."""
         if isinstance(v, WKBElement):
             return to_shape(v).wkt
